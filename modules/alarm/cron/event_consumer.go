@@ -17,6 +17,7 @@ package cron
 import (
 	"encoding/json"
 	log "github.com/Sirupsen/logrus"
+	"strings"
 
 	cmodel "github.com/open-falcon/falcon-plus/common/model"
 	"github.com/open-falcon/falcon-plus/modules/alarm/api"
@@ -46,13 +47,27 @@ func consume(event *cmodel.Event, isHigh bool) {
 	}
 }
 
+// 将tags中带有的team信息与action.Uic合并
+func mergeTeamsFromTags(teams string, tags map[string]string) string {
+	for k, _ := range tags {
+		if !strings.HasPrefix(k, "ibnerror_g_") {
+			continue
+		}
+		team := k[11:]
+		if len(team) > 0 {
+			teams = teams + "," + team
+		}
+	}
+	return teams
+}
+
 // 高优先级的不做报警合并
 func consumeHighEvents(event *cmodel.Event, action *api.Action) {
 	if action.Uic == "" {
 		return
 	}
 
-	phones, mails, ims := api.ParseTeams(action.Uic)
+	phones, mails, ims := api.ParseTeams(mergeTeamsFromTags(action.Uic, event.PushedTags))
 
 	smsContent := GenerateSmsContent(event)
 	mailContent := GenerateMailContent(event)
@@ -84,7 +99,7 @@ func consumeLowEvents(event *cmodel.Event, action *api.Action) {
 }
 
 func ParseUserSms(event *cmodel.Event, action *api.Action) {
-	userMap := api.GetUsers(action.Uic)
+	userMap := api.GetUsers(mergeTeamsFromTags(action.Uic, event.PushedTags))
 
 	content := GenerateSmsContent(event)
 	metric := event.Metric()
@@ -118,7 +133,7 @@ func ParseUserSms(event *cmodel.Event, action *api.Action) {
 }
 
 func ParseUserMail(event *cmodel.Event, action *api.Action) {
-	userMap := api.GetUsers(action.Uic)
+	userMap := api.GetUsers(mergeTeamsFromTags(action.Uic, event.PushedTags))
 
 	metric := event.Metric()
 	subject := GenerateSmsContent(event)
@@ -154,7 +169,7 @@ func ParseUserMail(event *cmodel.Event, action *api.Action) {
 }
 
 func ParseUserIm(event *cmodel.Event, action *api.Action) {
-	userMap := api.GetUsers(action.Uic)
+	userMap := api.GetUsers(mergeTeamsFromTags(action.Uic, event.PushedTags))
 
 	content := GenerateIMContent(event)
 	metric := event.Metric()
