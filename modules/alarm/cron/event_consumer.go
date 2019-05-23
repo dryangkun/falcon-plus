@@ -58,6 +58,7 @@ func mergeTeamsFromTags(teams string, tags map[string]string) string {
 			teams = teams + "," + team
 		}
 	}
+	log.Debug("mergeTeamsFromTags: ", teams)
 	return teams
 }
 

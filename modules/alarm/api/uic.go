@@ -78,11 +78,14 @@ func GetUsers(teams string) map[string]*uic.User {
 		}
 
 		if strings.HasPrefix(team, ":") {
-			user := CurlUser(team[1:])
+			name := team[1:]
+			user := CurlUser(name)
 			if user == nil {
-				continue
+				user = &uic.User{
+					Name:  name,
+					Email: name + "@ibingniao.com",
+				}
 			}
-
 			userMap[user.Name] = user
 		} else {
 			users := UsersOf(team)
