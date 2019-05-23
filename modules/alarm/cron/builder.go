@@ -63,14 +63,17 @@ func BuildCommonMailContent(event *model.Event) string {
 	link := g.Link(event)
 	tags := event.PushedTags
 	var delTagKeys []string
+	var ibnerrorGroups []string
 	for k, _ := range tags {
 		if strings.HasPrefix(k, "ibnerror_g_") {
 			delTagKeys = append(delTagKeys, k)
+			ibnerrorGroups = append(ibnerrorGroups, k[11:])
 		}
 	}
 	for _, k := range delTagKeys {
 		delete(tags, k)
 	}
+	tags["ibnerror_g"] = strings.Join(ibnerrorGroups, ",")
 
 	return fmt.Sprintf(
 		"%s\r\nP%d\r\nEndpoint:%s\r\nMetric:%s\r\nTags:%s\r\n%s: %s%s%s\r\nNote:%s\r\nMax:%d, Current:%d\r\nTimestamp:%s\r\n%s\r\n",
